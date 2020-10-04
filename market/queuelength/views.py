@@ -10,19 +10,9 @@ from .serializers import store_queueSerializer
 from django.http import JsonResponse
 from .models import store_queue_history
 from .serializers import store_queue_historySerializer
+from django.utils import timezone
 
-
-class store_queueList (APIView):
-
-    def get(self, request):
-        queue1= store_queue.objects.all()
-        serializer = store_queueSerializer(queue1, many=True)
-        return Response(serializer.data)
-
-    def post(self):
-        pass
-
-
+from django.db.models import Avg, Max, Min, Sum
 
 class storeInfoList (APIView):
 
@@ -33,9 +23,18 @@ class storeInfoList (APIView):
 
     def put(self, request, storeId):
         queue1= store_queue.objects.filter(store_id=storeId).first()
+        print("s.ljkf :: " +  str(timezone.now() -queue1.threshold_duration))
         if queue1 in [None, '']:
                 return Response(data="Store ID Missing")
-        serializer = store_queueSerializer(queue1, data=request.data, partial=True)
+        else :
+            queue2 = store_queue_history.objects.filter(store_id=storeId,
+            updated_at__gte = (timezone.now() - queue1.threshold_duration)).aggregate(Max('length'))
+            if queue2['length__max'] in [None, ''] or (queue2['length__max'] - request.data['length']) <= queue1.threshold:
+                 serializer = store_queueSerializer(queue1, data=request.data, partial=True)
+            else :
+                 return Response(data="Change Not Allowed")
+                                   
+
         if serializer.is_valid():
             serializer.save()
             history = store_queue_history(store_id  = storeId , length = request.data['length']) 

@@ -6,8 +6,8 @@ class store_queueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model= store_queue
-        fields= ('store_id', 'queue_id', 'length', 'updated_at')
-
+        fields= ('store_id', 'queue_id', 'length', 'updated_at', 'threshold', 'threshold_duration')
+    
 
 class store_queue_historySerializer(serializers.ModelSerializer):
 
